@@ -20,7 +20,7 @@ Create and run branch pipelines for Azure DevOps from VS Code or Cursor. Pick ta
 ## Usage
 1) Run **Create GitPipelines**, sign in with PAT when prompted, and pick target branches.  
 2) Checkout a feature branch.  
-3) Run **Use GitPipelines**; PR URLs are shown in the GitPipelines output channel and a notification.
+3) Run **Use GitPipelines**; optionally provide a Work Item ID to link; PR URLs are shown in the GitPipelines output channel and a notification.
 
 ## Pipeline storage
 - Pipelines are stored per workspace in root-level `gitpipelines.json`; the extension auto-adds this file to your project `.gitignore`.

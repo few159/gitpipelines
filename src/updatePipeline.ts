@@ -74,6 +74,13 @@ export function updatePipelineCommand(context: vscode.ExtensionContext, output: 
 			return;
 		}
 
+		const projectAliasInput = await vscode.window.showInputBox({
+			title: 'Project alias (optional)',
+			prompt: 'A short alias to show in pipeline output',
+			value: pipeline.projectAlias ?? '',
+			ignoreFocusOut: true
+		});
+
 		const updateTargets = await vscode.window.showQuickPick(
 			[
 				{ label: 'Yes', target: true },
@@ -129,6 +136,7 @@ export function updatePipelineCommand(context: vscode.ExtensionContext, output: 
 			name: sanitizeInput(nameInput, pipeline.name),
 			org: sanitizeInput(orgInput, pipeline.org),
 			project: sanitizeInput(projectInput, pipeline.project),
+			projectAlias: sanitizeInput(projectAliasInput, pipeline.projectAlias ?? '') || undefined,
 			repo: sanitizeInput(repoInput, pipeline.repo),
 			targetBranches
 		};

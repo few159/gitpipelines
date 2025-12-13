@@ -56,14 +56,18 @@ export async function createPullRequest(
 	sourceBranch: string,
 	targetBranch: string,
 	title?: string,
-	description?: string
+	description?: string,
+	workItemIds?: number[]
 ): Promise<CreatedPullRequest> {
 	const url = `${baseUrl(config)}/_apis/git/repositories/${encodeURIComponent(config.repo)}/pullrequests?api-version=${API_VERSION}`;
 	const payload = {
 		sourceRefName: `refs/heads/${sourceBranch}`,
 		targetRefName: `refs/heads/${targetBranch}`,
 		title: title ?? `${sourceBranch} -> ${targetBranch}`,
-		description
+		description,
+		...(workItemIds && workItemIds.length
+			? { workItemRefs: workItemIds.map((id) => ({ id })) }
+			: {})
 	};
 
 	type Response = {
@@ -72,12 +76,19 @@ export async function createPullRequest(
 		url?: string;
 	};
 
+	const friendlyUrl = (id: number) =>
+		`${baseUrl(config)}/_git/${encodeURIComponent(config.repo)}/pullrequest/${id}`;
+
 	const data = await request<Response>(config, url, {
 		method: 'POST',
 		body: JSON.stringify(payload)
 	});
 
-	const webUrl = data._links?.web?.href ?? data.url ?? '';
+	const rawUrl = data._links?.web?.href ?? data.url ?? '';
+	const webUrl =
+		rawUrl && !rawUrl.includes('/_apis/')
+			? rawUrl
+			: friendlyUrl(data.pullRequestId);
 	return {
 		id: data.pullRequestId,
 		webUrl,

@@ -5,6 +5,7 @@ export interface Pipeline {
 	name: string;
 	org: string;
 	project: string;
+	projectAlias?: string;
 	repo: string;
 	targetBranches: string[];
 	createdAt: string;

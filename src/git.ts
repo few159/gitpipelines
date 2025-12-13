@@ -31,6 +31,14 @@ export async function getCurrentBranch(workspaceFolder: vscode.WorkspaceFolder):
 	}
 }
 
+export async function getLastCommitMessage(workspaceFolder: vscode.WorkspaceFolder): Promise<string | undefined> {
+	try {
+		return await execGit(['log', '-1', '--pretty=%B'], workspaceFolder.uri.fsPath);
+	} catch {
+		return undefined;
+	}
+}
+
 export function parseAzureRemoteUrl(remoteUrl: string | undefined): AzureRemoteInfo | undefined {
 	if (!remoteUrl) {
 		return undefined;

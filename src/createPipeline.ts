@@ -78,11 +78,18 @@ export function createPipelineCommand(context: vscode.ExtensionContext, output: 
 			return;
 		}
 
+		const projectAlias = await vscode.window.showInputBox({
+			title: 'Project alias (optional)',
+			prompt: 'A short alias to show in pipeline output',
+			value: defaults?.project
+		});
+
 		const pipeline: Pipeline = {
 			id: makeId(),
 			name: pipelineName,
 			org,
 			project,
+			projectAlias: projectAlias?.trim() || undefined,
 			repo,
 			targetBranches: targets,
 			createdAt: new Date().toISOString()
