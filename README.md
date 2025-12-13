@@ -13,6 +13,8 @@ Create and run branch pipelines for Azure DevOps from VS Code or Cursor. Pick ta
 
 ## Commands
 - `GitPipelines: Create GitPipelines` — select org/project/repo, choose target branches, and save the pipeline.
+- `GitPipelines: Update GitPipeline` — edit pipeline name, org/project/repo, or targets.
+- `GitPipelines: Delete GitPipeline` — remove a saved pipeline.
 - `GitPipelines: Use GitPipelines` — from your current branch, create PRs to all targets in the selected pipeline.
 
 ## Usage
@@ -21,7 +23,7 @@ Create and run branch pipelines for Azure DevOps from VS Code or Cursor. Pick ta
 3) Run **Use GitPipelines**; PR URLs are shown in the GitPipelines output channel and a notification.
 
 ## Pipeline storage
-- Pipelines are stored per workspace in `gitpipelines.json`.
+- Pipelines are stored per workspace in root-level `gitpipelines.json`; the extension auto-adds this file to your project `.gitignore`.
 - PAT is stored in the editor’s secret storage (never in the workspace).
 
 ## Build

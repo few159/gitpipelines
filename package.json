@@ -3,7 +3,7 @@
   "displayName": "GitPipelines",
   "publisher": "felipe-albernaz",
   "description": "Create Azure DevOps PR pipelines from VS Code and push to multiple branches.",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "engines": {
     "vscode": "^1.99.0"
   },
@@ -20,6 +20,14 @@
       {
         "command": "gitpipelines.createPipeline",
         "title": "Create GitPipelines"
+      },
+      {
+        "command": "gitpipelines.updatePipeline",
+        "title": "Update GitPipeline"
+      },
+      {
+        "command": "gitpipelines.deletePipeline",
+        "title": "Delete GitPipeline"
       }
     ]
   },
