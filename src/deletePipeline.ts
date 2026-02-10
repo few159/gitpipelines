@@ -1,9 +1,9 @@
 import * as vscode from 'vscode';
-import { deletePipeline, getWorkspaceFolder, readPipelineStore } from './storage';
+import { deletePipeline, pickWorkspaceFolder, readPipelineStore } from './storage';
 
 export function deletePipelineCommand(output: vscode.OutputChannel) {
 	return async () => {
-		const workspaceFolder = getWorkspaceFolder();
+		const workspaceFolder = await pickWorkspaceFolder();
 		if (!workspaceFolder) {
 			vscode.window.showErrorMessage('Open a workspace folder to delete a pipeline.');
 			return;

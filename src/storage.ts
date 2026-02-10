@@ -121,3 +121,24 @@ export function getWorkspaceFolder(): vscode.WorkspaceFolder | undefined {
 	return vscode.workspace.workspaceFolders?.[0];
 }
 
+export async function pickWorkspaceFolder(): Promise<vscode.WorkspaceFolder | undefined> {
+	const folders = vscode.workspace.workspaceFolders;
+	if (!folders || folders.length === 0) {
+		return undefined;
+	}
+	if (folders.length === 1) {
+		return folders[0];
+	}
+
+	const picked = await vscode.window.showQuickPick(
+		folders.map((f) => ({
+			label: f.name,
+			detail: f.uri.fsPath,
+			folder: f
+		})),
+		{ title: 'Select a workspace folder' }
+	);
+
+	return picked?.folder;
+}
+

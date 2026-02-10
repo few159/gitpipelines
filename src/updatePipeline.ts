@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { fetchBranches } from './azureDevops';
-import { getWorkspaceFolder, ensurePat, readPipelineStore, updatePipeline, Pipeline } from './storage';
+import { pickWorkspaceFolder, ensurePat, readPipelineStore, updatePipeline, Pipeline } from './storage';
 
 function sanitizeInput(value: string | undefined, fallback: string): string {
 	if (value === undefined) {
@@ -12,7 +12,7 @@ function sanitizeInput(value: string | undefined, fallback: string): string {
 
 export function updatePipelineCommand(context: vscode.ExtensionContext, output: vscode.OutputChannel) {
 	return async () => {
-		const workspaceFolder = getWorkspaceFolder();
+		const workspaceFolder = await pickWorkspaceFolder();
 		if (!workspaceFolder) {
 			vscode.window.showErrorMessage('Open a workspace folder to update a pipeline.');
 			return;

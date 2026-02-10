@@ -39,6 +39,19 @@ export async function getLastCommitMessage(workspaceFolder: vscode.WorkspaceFold
 	}
 }
 
+export async function isBranchPublished(workspaceFolder: vscode.WorkspaceFolder, branch: string): Promise<boolean> {
+	try {
+		await execGit(['rev-parse', '--verify', `origin/${branch}`], workspaceFolder.uri.fsPath);
+		return true;
+	} catch {
+		return false;
+	}
+}
+
+export async function pushBranch(workspaceFolder: vscode.WorkspaceFolder, branch: string): Promise<void> {
+	await execGit(['push', '-u', 'origin', branch], workspaceFolder.uri.fsPath);
+}
+
 export function parseAzureRemoteUrl(remoteUrl: string | undefined): AzureRemoteInfo | undefined {
 	if (!remoteUrl) {
 		return undefined;

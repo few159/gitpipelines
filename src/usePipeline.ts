@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import { createPullRequest } from "./azureDevops";
-import { getCurrentBranch, getLastCommitMessage } from "./git";
-import { ensurePat, getWorkspaceFolder, readPipelineStore } from "./storage";
+import { getCurrentBranch, getLastCommitMessage, isBranchPublished, pushBranch } from "./git";
+import { ensurePat, pickWorkspaceFolder, readPipelineStore } from "./storage";
 
 
 export function usePipelineCommand(
@@ -9,7 +9,7 @@ export function usePipelineCommand(
   output: vscode.OutputChannel
 ) {
   return async () => {
-    const workspaceFolder = getWorkspaceFolder();
+    const workspaceFolder = await pickWorkspaceFolder();
     if (!workspaceFolder) {
       vscode.window.showErrorMessage(
         "Open a workspace folder to use a pipeline."
@@ -53,6 +53,25 @@ export function usePipelineCommand(
     if (!currentBranch) {
       vscode.window.showErrorMessage("Unable to detect the current branch.");
       return;
+    }
+
+    const published = await isBranchPublished(workspaceFolder, currentBranch);
+    if (!published) {
+      const action = await vscode.window.showWarningMessage(
+        `Branch "${currentBranch}" has not been pushed to origin. Push it now?`,
+        "Push",
+        "Cancel"
+      );
+      if (action !== "Push") {
+        return;
+      }
+      try {
+        await pushBranch(workspaceFolder, currentBranch);
+        vscode.window.showInformationMessage(`Branch "${currentBranch}" pushed to origin.`);
+      } catch (error) {
+        vscode.window.showErrorMessage(`Failed to push branch: ${String(error)}`);
+        return;
+      }
     }
 
     const workItemInput = await vscode.window.showInputBox({

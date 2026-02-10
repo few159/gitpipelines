@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { randomUUID } from 'node:crypto';
-import { addPipeline, ensurePat, getWorkspaceFolder, Pipeline } from './storage';
+import { addPipeline, ensurePat, pickWorkspaceFolder, Pipeline } from './storage';
 import { fetchBranches } from './azureDevops';
 import { getOriginUrl, parseAzureRemoteUrl } from './git';
 
@@ -19,7 +19,7 @@ async function promptOrWarn(title: string, value?: string): Promise<string | und
 
 export function createPipelineCommand(context: vscode.ExtensionContext, output: vscode.OutputChannel) {
 	return async () => {
-		const workspaceFolder = getWorkspaceFolder();
+		const workspaceFolder = await pickWorkspaceFolder();
 		if (!workspaceFolder) {
 			vscode.window.showErrorMessage('Open a workspace folder to create a pipeline.');
 			return;
