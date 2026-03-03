@@ -57,7 +57,8 @@ export async function createPullRequest(
 	targetBranch: string,
 	title?: string,
 	description?: string,
-	workItemIds?: number[]
+	workItemIds?: number[],
+	deleteSourceBranch?: boolean
 ): Promise<CreatedPullRequest> {
 	const url = `${baseUrl(config)}/_apis/git/repositories/${encodeURIComponent(config.repo)}/pullrequests?api-version=${API_VERSION}`;
 	const payload = {
@@ -67,6 +68,9 @@ export async function createPullRequest(
 		description,
 		...(workItemIds && workItemIds.length
 			? { workItemRefs: workItemIds.map((id) => ({ id })) }
+			: {}),
+		...(deleteSourceBranch
+			? { completionOptions: { deleteSourceBranch: true } }
 			: {})
 	};
 

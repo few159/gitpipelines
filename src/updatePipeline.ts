@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { fetchBranches } from './azureDevops';
-import { pickWorkspaceFolder, ensurePat, readPipelineStore, updatePipeline, Pipeline } from './storage';
+import { pickWorkspaceFolder, ensurePat, readPipelineStore, updatePipeline, Pipeline, TargetBranch } from './storage';
+import { promptTemporaryBranches } from './branchPrompts';
 
 function sanitizeInput(value: string | undefined, fallback: string): string {
 	if (value === undefined) {
@@ -92,7 +93,7 @@ export function updatePipelineCommand(context: vscode.ExtensionContext, output: 
 			return;
 		}
 
-		let targetBranches = pipeline.targetBranches;
+		let targetBranches: TargetBranch[] = pipeline.targetBranches;
 		if (updateTargets.target) {
 			const pat = await ensurePat(context.secrets);
 			if (!pat) {
@@ -128,7 +129,12 @@ export function updatePipelineCommand(context: vscode.ExtensionContext, output: 
 				vscode.window.showWarningMessage('Update cancelled: no branches selected.');
 				return;
 			}
-			targetBranches = picks;
+
+			const newTargets = await promptTemporaryBranches(picks);
+			if (!newTargets) {
+				return;
+			}
+			targetBranches = newTargets;
 		}
 
 		const updated: Pipeline = {
@@ -143,7 +149,8 @@ export function updatePipelineCommand(context: vscode.ExtensionContext, output: 
 
 		try {
 			await updatePipeline(workspaceFolder, updated);
-			output.appendLine(`[gitpipelines] Updated pipeline "${updated.name}" targeting: ${updated.targetBranches.join(', ')}`);
+			const branchNames = updated.targetBranches.map((t) => t.name).join(', ');
+			output.appendLine(`[gitpipelines] Updated pipeline "${updated.name}" targeting: ${branchNames}`);
 			vscode.window.showInformationMessage(`Pipeline "${updated.name}" updated.`);
 		} catch (error) {
 			vscode.window.showErrorMessage(`Failed to update pipeline: ${String(error)}`);

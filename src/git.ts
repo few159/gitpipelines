@@ -52,6 +52,16 @@ export async function pushBranch(workspaceFolder: vscode.WorkspaceFolder, branch
 	await execGit(['push', '-u', 'origin', branch], workspaceFolder.uri.fsPath);
 }
 
+export async function createAndPushTempBranch(
+	workspaceFolder: vscode.WorkspaceFolder,
+	sourceBranch: string,
+	tempBranchName: string
+): Promise<void> {
+	const cwd = workspaceFolder.uri.fsPath;
+	await execGit(['branch', tempBranchName, sourceBranch], cwd);
+	await execGit(['push', '-u', 'origin', tempBranchName], cwd);
+}
+
 export function parseAzureRemoteUrl(remoteUrl: string | undefined): AzureRemoteInfo | undefined {
 	if (!remoteUrl) {
 		return undefined;

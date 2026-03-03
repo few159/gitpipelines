@@ -1,5 +1,11 @@
 import * as vscode from 'vscode';
 
+export interface TargetBranch {
+	name: string;
+	temporary?: boolean;
+	tempSuffix?: string;
+}
+
 export interface Pipeline {
 	id: string;
 	name: string;
@@ -7,7 +13,7 @@ export interface Pipeline {
 	project: string;
 	projectAlias?: string;
 	repo: string;
-	targetBranches: string[];
+	targetBranches: TargetBranch[];
 	createdAt: string;
 }
 
@@ -16,9 +22,11 @@ export interface PipelineStore {
 }
 
 const STORAGE_FILE = 'gitpipelines.json';
+const LOG_FILE = 'gitpipelines.log';
 const SECRET_PAT_KEY = 'gitpipelines.azureDevOps.pat';
 export const PIPELINE_STORE_FILENAME = STORAGE_FILE;
 const GITIGNORE_FILE = '.gitignore';
+const IGNORED_FILES = [STORAGE_FILE, LOG_FILE];
 
 function defaultStore(): PipelineStore {
 	return { pipelines: [] };
@@ -28,20 +36,30 @@ function storageUri(workspaceFolder: vscode.WorkspaceFolder): vscode.Uri {
 	return vscode.Uri.joinPath(workspaceFolder.uri, STORAGE_FILE);
 }
 
+function migratePipelines(store: PipelineStore): PipelineStore {
+	for (const pipeline of store.pipelines) {
+		if (pipeline.targetBranches.length > 0 && typeof pipeline.targetBranches[0] === 'string') {
+			pipeline.targetBranches = (pipeline.targetBranches as unknown as string[]).map(
+				(name) => ({ name })
+			);
+		}
+	}
+	return store;
+}
+
 export async function readPipelineStore(workspaceFolder: vscode.WorkspaceFolder): Promise<PipelineStore> {
 	try {
 		const uri = storageUri(workspaceFolder);
 		const content = await vscode.workspace.fs.readFile(uri);
 		const parsed = JSON.parse(new TextDecoder().decode(content)) as PipelineStore;
-		return parsed?.pipelines ? parsed : defaultStore();
+		return parsed?.pipelines ? migratePipelines(parsed) : defaultStore();
 	} catch (error) {
-		// File likely missing on first run; return default store instead of failing.
 		return defaultStore();
 	}
 }
 
 export async function writePipelineStore(workspaceFolder: vscode.WorkspaceFolder, store: PipelineStore): Promise<void> {
-	await ensureStoreIgnored(workspaceFolder);
+	await ensureFilesIgnored(workspaceFolder);
 	const uri = storageUri(workspaceFolder);
 	const encoder = new TextEncoder();
 	const data = encoder.encode(JSON.stringify(store, null, 2));
@@ -71,7 +89,7 @@ export async function deletePipeline(workspaceFolder: vscode.WorkspaceFolder, pi
 	await writePipelineStore(workspaceFolder, store);
 }
 
-async function ensureStoreIgnored(workspaceFolder: vscode.WorkspaceFolder): Promise<void> {
+async function ensureFilesIgnored(workspaceFolder: vscode.WorkspaceFolder): Promise<void> {
 	const gitignoreUri = vscode.Uri.joinPath(workspaceFolder.uri, GITIGNORE_FILE);
 	let current = '';
 	try {
@@ -81,15 +99,44 @@ async function ensureStoreIgnored(workspaceFolder: vscode.WorkspaceFolder): Prom
 		// Missing .gitignore; we'll create it.
 	}
 
-	if (current.split(/\r?\n/).some((line) => line.trim() === STORAGE_FILE)) {
+	const lines = current.split(/\r?\n/).map((l) => l.trim());
+	const missing = IGNORED_FILES.filter((f) => !lines.includes(f));
+	if (missing.length === 0) {
 		return;
 	}
 
-	const nextContent = current && !current.endsWith('\n')
-		? `${current}\n${STORAGE_FILE}\n`
-		: `${current}${STORAGE_FILE}\n`;
+	let nextContent = current;
+	for (const file of missing) {
+		nextContent = nextContent && !nextContent.endsWith('\n')
+			? `${nextContent}\n${file}\n`
+			: `${nextContent}${file}\n`;
+	}
 
 	await vscode.workspace.fs.writeFile(gitignoreUri, new TextEncoder().encode(nextContent));
+}
+
+export interface LogEntry {
+	pipelineName: string;
+	prTitle: string;
+	linkOrError: string;
+}
+
+export async function appendLog(workspaceFolder: vscode.WorkspaceFolder, entry: LogEntry): Promise<void> {
+	await ensureFilesIgnored(workspaceFolder);
+	const uri = vscode.Uri.joinPath(workspaceFolder.uri, LOG_FILE);
+	const timestamp = new Date().toISOString().replace('T', ' ').replace(/\.\d{3}Z$/, '');
+	const line = `[${timestamp}] (${entry.pipelineName}) "${entry.prTitle}" -- ${entry.linkOrError}\n`;
+
+	let existing = '';
+	try {
+		const buf = await vscode.workspace.fs.readFile(uri);
+		existing = new TextDecoder().decode(buf);
+	} catch {
+		// File doesn't exist yet.
+	}
+
+	const content = existing + line;
+	await vscode.workspace.fs.writeFile(uri, new TextEncoder().encode(content));
 }
 
 export async function getPat(secretStorage: vscode.SecretStorage): Promise<string | undefined> {

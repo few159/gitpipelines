@@ -5,9 +5,8 @@ import { usePipelineCommand } from './usePipeline';
 import { createPipelineCommand } from './createPipeline';
 import { updatePipelineCommand } from './updatePipeline';
 import { deletePipelineCommand } from './deletePipeline';
+import { singlePipelineCommand } from './singlePipeline';
 
-// This method is called when your extension is activated
-// Your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
 	const output = vscode.window.createOutputChannel('GitPipelines');
 
@@ -15,7 +14,8 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.commands.registerCommand('gitpipelines.usePipelines', usePipelineCommand(context, output)),
 		vscode.commands.registerCommand('gitpipelines.createPipeline', createPipelineCommand(context, output)),
 		vscode.commands.registerCommand('gitpipelines.updatePipeline', updatePipelineCommand(context, output)),
-		vscode.commands.registerCommand('gitpipelines.deletePipeline', deletePipelineCommand(output))
+		vscode.commands.registerCommand('gitpipelines.deletePipeline', deletePipelineCommand(output)),
+		vscode.commands.registerCommand('gitpipelines.singlePipeline', singlePipelineCommand(context, output))
 	];
 
 	context.subscriptions.push(...disposables);

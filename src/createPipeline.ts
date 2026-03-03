@@ -1,8 +1,9 @@
 import * as vscode from 'vscode';
 import { randomUUID } from 'node:crypto';
-import { addPipeline, ensurePat, pickWorkspaceFolder, Pipeline } from './storage';
+import { addPipeline, ensurePat, pickWorkspaceFolder, Pipeline, TargetBranch } from './storage';
 import { fetchBranches } from './azureDevops';
 import { getOriginUrl, parseAzureRemoteUrl } from './git';
+import { promptTemporaryBranches } from './branchPrompts';
 
 function makeId(): string {
 	return typeof randomUUID === 'function' ? randomUUID() : `pipeline-${Date.now()}`;
@@ -62,14 +63,19 @@ export function createPipelineCommand(context: vscode.ExtensionContext, output: 
 			return;
 		}
 
-		const targets = await vscode.window.showQuickPick(branches, {
+		const branchPicks = await vscode.window.showQuickPick(branches, {
 			title: 'Select target branches for the pipeline',
 			canPickMany: true,
 			placeHolder: 'Select one or more branches'
 		});
 
-		if (!targets || targets.length === 0) {
+		if (!branchPicks || branchPicks.length === 0) {
 			vscode.window.showInformationMessage('Pipeline creation cancelled (no branches selected).');
+			return;
+		}
+
+		const targetBranches = await promptTemporaryBranches(branchPicks);
+		if (!targetBranches) {
 			return;
 		}
 
@@ -91,14 +97,15 @@ export function createPipelineCommand(context: vscode.ExtensionContext, output: 
 			project,
 			projectAlias: projectAlias?.trim() || undefined,
 			repo,
-			targetBranches: targets,
+			targetBranches,
 			createdAt: new Date().toISOString()
 		};
 
 		try {
 			await addPipeline(workspaceFolder, pipeline);
-			output.appendLine(`[gitpipelines] Added pipeline "${pipelineName}" targeting: ${targets.join(', ')}`);
-			vscode.window.showInformationMessage(`Saved pipeline "${pipelineName}" with ${targets.length} target branch(es).`);
+			const branchNames = targetBranches.map((t) => t.name).join(', ');
+			output.appendLine(`[gitpipelines] Added pipeline "${pipelineName}" targeting: ${branchNames}`);
+			vscode.window.showInformationMessage(`Saved pipeline "${pipelineName}" with ${targetBranches.length} target branch(es).`);
 		} catch (error) {
 			vscode.window.showErrorMessage(`Failed to save pipeline: ${String(error)}`);
 		}
