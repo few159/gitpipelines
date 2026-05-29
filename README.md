@@ -11,6 +11,31 @@ Create and run branch pipelines for Azure DevOps from VS Code or Cursor. Pick ta
 - Azure DevOps Personal Access Token with Code (read/write) scope.
 - Git remote `origin` pointing to an Azure DevOps repo (HTTPS or SSH).
 
+## Install in your IDE
+Install the published VSIX file, `gitpipelines-1.2.0.vsix`, in VS Code or Cursor.
+
+### VS Code
+1. Open the Extensions view.
+2. Select **Install from VSIX...** from the view menu.
+3. Choose `gitpipelines-1.2.0.vsix`.
+
+You can also install it from the command line:
+
+```bash
+code --install-extension gitpipelines-1.2.0.vsix
+```
+
+### Cursor
+1. Open the Extensions view.
+2. Select **Install from VSIX...** from the view menu.
+3. Choose `gitpipelines-1.2.0.vsix`.
+
+You can also install it from the command line:
+
+```bash
+cursor --install-extension gitpipelines-1.2.0.vsix
+```
+
 ## Commands
 - `GitPipelines: Create GitPipelines` — select org/project/repo, choose target branches, and save the pipeline.
 - `GitPipelines: Update GitPipeline` — edit pipeline name, org/project/repo, or targets.
