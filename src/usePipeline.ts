@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 import { getCurrentBranch, getLastCommitMessage, isBranchPublished, pushBranch } from "./git";
 import { ensurePat, pickWorkspaceFolder, readPipelineStore } from "./storage";
 import { promptAdditionalBranchPr, runPipeline, showResults } from "./pipelineRunner";
+import { promptWorkItemIds } from "./workItemPrompts";
 
 export function usePipelineCommand(
   context: vscode.ExtensionContext,
@@ -73,23 +74,7 @@ export function usePipelineCommand(
       }
     }
 
-    const workItemInput = await vscode.window.showInputBox({
-      title: "Optional: Work Item ID to link to PRs",
-      prompt: "Enter a single Azure DevOps work item ID or leave blank",
-      ignoreFocusOut: true,
-      validateInput: (value) => {
-        if (!value.trim()) {
-          return null;
-        }
-        return /^\d+$/.test(value.trim())
-          ? null
-          : "Work item ID must be numeric";
-      },
-    });
-
-    const workItemIds = workItemInput?.trim()
-      ? [Number(workItemInput.trim())]
-      : undefined;
+    const workItemIds = await promptWorkItemIds(currentBranch);
     const lastCommitMessage = await getLastCommitMessage(workspaceFolder);
     const aliasLabel = pipeline.projectAlias || pipeline.project;
     const config = { org: pipeline.org, project: pipeline.project, repo: pipeline.repo, pat };
@@ -105,18 +90,20 @@ export function usePipelineCommand(
       output,
     });
 
-    const additionalResult = await promptAdditionalBranchPr(
-      workspaceFolder,
-      config,
-      currentBranch,
-      aliasLabel,
-      pipeline.targetBranches.map((t) => t.name),
-      workItemIds,
-      lastCommitMessage,
-      output
-    );
-    if (additionalResult) {
-      results.push(additionalResult);
+    if (pipeline.askForAdditionalPr === true) {
+      const additionalResult = await promptAdditionalBranchPr(
+        workspaceFolder,
+        config,
+        currentBranch,
+        aliasLabel,
+        pipeline.targetBranches.map((t) => t.name),
+        workItemIds,
+        lastCommitMessage,
+        output
+      );
+      if (additionalResult) {
+        results.push(additionalResult);
+      }
     }
 
     await showResults(results, aliasLabel, currentBranch, output);

@@ -14,6 +14,7 @@ export interface Pipeline {
 	projectAlias?: string;
 	repo: string;
 	targetBranches: TargetBranch[];
+	askForAdditionalPr?: boolean;
 	createdAt: string;
 }
 

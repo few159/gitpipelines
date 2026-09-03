@@ -98,6 +98,7 @@ export function createPipelineCommand(context: vscode.ExtensionContext, output: 
 			projectAlias: projectAlias?.trim() || undefined,
 			repo,
 			targetBranches,
+			askForAdditionalPr: false,
 			createdAt: new Date().toISOString()
 		};
 

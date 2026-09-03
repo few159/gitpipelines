@@ -3,7 +3,8 @@ import { fetchBranches } from './azureDevops';
 import { getCurrentBranch, getLastCommitMessage, getOriginUrl, isBranchPublished, parseAzureRemoteUrl, pushBranch } from './git';
 import { ensurePat, pickWorkspaceFolder } from './storage';
 import { promptTemporaryBranches } from './branchPrompts';
-import { promptAdditionalBranchPr, runPipeline, showResults } from './pipelineRunner';
+import { runPipeline, showResults } from './pipelineRunner';
+import { promptWorkItemIds } from './workItemPrompts';
 
 const ANONYMOUS = 'ANONYMOUS';
 
@@ -86,21 +87,7 @@ export function singlePipelineCommand(
 			return;
 		}
 
-		const workItemInput = await vscode.window.showInputBox({
-			title: 'Optional: Work Item ID to link to PRs',
-			prompt: 'Enter a single Azure DevOps work item ID or leave blank',
-			ignoreFocusOut: true,
-			validateInput: (value) => {
-				if (!value.trim()) {
-					return null;
-				}
-				return /^\d+$/.test(value.trim()) ? null : 'Work item ID must be numeric';
-			}
-		});
-
-		const workItemIds = workItemInput?.trim()
-			? [Number(workItemInput.trim())]
-			: undefined;
+		const workItemIds = await promptWorkItemIds(currentBranch);
 		const lastCommitMessage = await getLastCommitMessage(workspaceFolder);
 
 		const results = await runPipeline({
@@ -113,20 +100,6 @@ export function singlePipelineCommand(
 			lastCommitMessage,
 			output
 		});
-
-		const additionalResult = await promptAdditionalBranchPr(
-			workspaceFolder,
-			config,
-			currentBranch,
-			ANONYMOUS,
-			targetBranches.map((t) => t.name),
-			workItemIds,
-			lastCommitMessage,
-			output
-		);
-		if (additionalResult) {
-			results.push(additionalResult);
-		}
 
 		await showResults(results, ANONYMOUS, currentBranch, output);
 	};

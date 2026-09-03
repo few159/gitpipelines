@@ -3,7 +3,7 @@
   "displayName": "GitPipelines",
   "publisher": "felipe-albernaz",
   "description": "Create Azure DevOps PR pipelines from VS Code and push to multiple branches.",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "engines": {
     "vscode": "^1.99.0"
   },
@@ -47,7 +47,8 @@
     "pretest": "npm run compile-tests && npm run compile && npm run lint",
     "check-types": "tsc --noEmit",
     "lint": "eslint src",
-    "test": "vscode-test"
+    "test": "vscode-test",
+    "test:unit": "node --test tests/*.test.cjs"
   },
   "devDependencies": {
     "@types/vscode": "^1.99.0",
